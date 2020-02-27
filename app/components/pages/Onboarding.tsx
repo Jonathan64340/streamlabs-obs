@@ -33,8 +33,6 @@ export default class OnboardingPage extends TsxComponent<{}> {
   processing = false;
   fbSetupEnabled: boolean = null;
 
-  stepsState = [{ complete: false }, { complete: false }, { complete: false }];
-
   checkFbPageEnabled() {
     if (this.fbSetupEnabled !== null || !this.userService.isLoggedIn) return;
     // This will do a second unnecessary fetch, but it's the only
@@ -50,8 +48,6 @@ export default class OnboardingPage extends TsxComponent<{}> {
 
   continue(importedObs?: boolean) {
     this.checkFbPageEnabled();
-    this.adjustStepsState(importedObs);
-
     this.proceed();
   }
 
@@ -59,12 +55,7 @@ export default class OnboardingPage extends TsxComponent<{}> {
     if (this.processing) return;
     if (this.currentStep === this.stepsState.length) return this.complete();
 
-    this.stepsState[this.currentStep - 1].complete = true;
     this.currentStep = this.currentStep + 1;
-
-    if (this.currentStep === this.stepsState.length) {
-      this.stepsState[this.currentStep - 1].complete = true;
-    }
   }
 
   complete() {
@@ -75,24 +66,10 @@ export default class OnboardingPage extends TsxComponent<{}> {
     this.processing = bool;
   }
 
-  adjustStepsState(importedObs?: boolean) {
-    if (importedObs === true) {
-      this.importedFromObs = true;
-    } else if (importedObs === false) {
-      this.importedFromObs = false;
-      if (this.noExistingSceneCollections) {
-        this.stepsState.push({ complete: false });
-      }
-      if (
-        this.onboardingService.isTwitchAuthed ||
-        (this.onboardingService.isFacebookAuthed && this.fbSetupEnabled)
-      ) {
-        this.stepsState.push({ complete: false });
-      }
-      if (this.restreamService.canEnableRestream) {
-        this.stepsState.push({ complete: false });
-      }
-    }
+  get stepsState() {
+    return this.steps.map((step, index) => {
+      return { complete: index + 1 < this.currentStep };
+    });
   }
 
   get steps() {
